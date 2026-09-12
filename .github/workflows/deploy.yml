@@ -1,16 +1,39 @@
-# GOAL: i have to deploy the project using git hum action 
+
+# Goal: deploy the devboard project on the github action 
 
 name: Deploy the project
 
 on:
   push:
+    branches:
+      - main
 
 jobs:
   deploy:
     runs-on: self-hosted
+    
     steps:
-      - name: code checkout
+      # STEP 1: Download your code
+      - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Run docker container
-        run: docker compose up -d 
+      # STEP 2: Create the .env file because our secrets are stored in it 
+      - name: Create .env file
+        run: cp .env.example .env  # it is copying from existing file we have .env.example 
+
+      # STEP 3: Stop old containers
+    #  - name: Stop old containers
+     #   run: docker compose down --remove-orphans || true  # we use this if our old container is ruuning 
+
+      # STEP 4: Pull and start containers (NO REBUILD!)
+      - name: Deploy with Docker Compose
+        run: docker compose up -d
+
+      # STEP 5: Check if services are running
+      - name: Check if services are running
+        run: docker compose ps
+
+      # STEP 6: Show logs if something goes wrong
+      - name: Show logs (if failed)
+        if: failure()
+        run: docker compose logs

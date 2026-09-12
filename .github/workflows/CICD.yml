@@ -12,7 +12,7 @@ jobs:
   BUild-an-image-of-docker-and-push-image-to-dockerhub:
     needs: code-lint-frontend-Backend-Postgress_DB
     secrets: inherit
-    uses: ./.github/workflows/frontend_backend_docker_build_and_push.yml
+    uses: ./.github/workflows/frontend_backend_docker_builld_and_push.yml
 
   Deploy:
 

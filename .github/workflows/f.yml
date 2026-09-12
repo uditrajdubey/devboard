@@ -45,7 +45,6 @@ jobs:
       # KYO KIYA: Source code (React JSX, CSS) ko browser-readable optimized JavaScript, HTML aur CSS static files (`dist` folder) mein compile karne ke liye.
       # KAHA SE IDEA AAYA: package.json ki `"build": "vite build"` script se. Production deployment ke liye ye step mandatory hai.
       - name: Build application
-      - name: Build application
         run: npm run build
 
       

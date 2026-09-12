@@ -30,7 +30,7 @@ jobs:
      
      # we need to install all the packages which is required to build the frontend
       - name: install dependencies
-        run : npm ci
+        run : npm ci --legacy-peer-deps
 
       # code linter is used to check if code is synatctically correct
       - name: Run linter

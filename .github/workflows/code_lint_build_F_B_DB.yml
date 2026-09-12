@@ -8,7 +8,7 @@ on:
 jobs:
 
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
      # because all files of backend are kept in the frontend directory
     defaults:

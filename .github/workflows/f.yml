@@ -92,6 +92,8 @@ jobs:
       # KAHA SE IDEA AAYA: Go community mein 'golangci-lint' sabse powerful aur industry-standard linter tool hai.
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: ./backend
 
       # Step 6: Unit Tests Run Karna
       # KYO KIYA: Backend APIs aur database logic mein koi breaking changes ya bugs toh nahi hain, ye build hone se pehle check karne ke liye.

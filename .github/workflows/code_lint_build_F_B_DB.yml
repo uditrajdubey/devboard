@@ -3,7 +3,7 @@
 name: build frontend and backend and database
 
 on:
-  push:
+  workflow_call:
 
 jobs:
 

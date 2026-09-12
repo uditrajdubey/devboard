@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
      # because all files of backend are kept in the frontend directory
-   # defaults:
-      #run:
-       # working-directory: ./frontend
+    defaults:
+      run:
+        working-directory: ./frontend
     steps:
 
     # pull down or i have cloned the repo code to the runner(it is simialr as git clone )
@@ -26,6 +26,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
      
      # we need to install all the packages which is required to build the frontend
       - name: install dependencies
@@ -54,9 +55,9 @@ jobs:
     runs-on: ubuntu-latest
 
     # because all files of backend are kept in the backend directory
-    #defaults:
-    #  run:
-       # working-directory: ./backend
+    defaults:
+      run:
+         working-directory: ./backend
     steps:
 
       # Step 1: Code Checkout

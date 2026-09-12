@@ -1,0 +1,153 @@
+# GOAL: first i have to build the code of frontend and backemd and database
+
+name: build frontend and backend and database
+
+on:
+  push:
+
+jobs:
+
+  frontend:
+    runs-on: ubuntu-latest
+
+     # because all files of backend are kept in the frontend directory
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+
+    # pull down or i have cloned the repo code to the runner(it is simialr as git clone )
+      - name: code checkout
+        uses: actions/checkout@v7
+    
+     # node js is setup or installed because the frontend uses vite , react, tailwind so to run these techstack it requires nodejs to run 
+      - name:  Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+     
+     # we need to install all the packages which is required to build the frontend
+      - name: install dependencies
+        run : npm ci --legacy-peer-deps
+
+      # code linter is used to check if code is synatctically correct
+      - name: Run linter
+        run: npm run lint  
+
+      # Testing is done 
+     
+      - name: Run tests
+        run: npm run test
+     
+     # generated the Production Build.
+    
+      - name: Build application
+        run: npm run build
+
+      
+
+
+  backend:
+    runs-on: ubuntu-latest
+
+    # because all files of backend are kept in the backend directory
+    defaults:
+      run:
+         working-directory: ./backend
+    steps:
+
+      # Step 1: Code Checkout
+     
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      # Step 2: Go Environment Setup
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true # go.mod aur go.sum dependencies ko cache karega taaki build speed fast ho sake
+
+      # Step 3: installed Dependencies of GO 
+     
+      - name: Download Go dependencies
+        run: go mod download
+
+      # Step 4: Code Verification & Tidy Check
+     
+      - name: Verify dependencies
+        run: go mod verify
+
+      # Step 5: Backend Code Linting
+    
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: ./backend
+
+      # Step 6: Ran the testing to test the backend
+    
+      - name: Run unit tests
+        run: go test -v ./...
+
+      # Step 6: Build the Go Application
+     
+      - name: Build Go binary
+        run: go build -v -o server .
+
+
+
+  database:
+    runs-on: ubuntu-latest
+
+    # Step A: PostgreSQL Service Setup 
+   
+    services:
+      postgres:
+        image: postgres:16-alpine # Docker compose exact image we have used 
+        env:
+          POSTGRES_USER: devuser      # Docker compose environment variable
+          POSTGRES_PASSWORD: devpassword  # Docker compose environment variable
+          POSTGRES_DB: devboard_db    # Docker compose environment variable
+        ports:
+          - 5432:5432 # Docker compose internal 5432 port mapping
+        
+        #verify that Database completely ready.
+        
+        options: >-
+          --health-cmd "pg_isready -U devuser -d devboard_db"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      # Step 1: Code Checkout
+     
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      # Step 2: Install PostgreSQL Client
+     
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      # Step 3: Database Health & Connection Test
+      
+      - name: Test Postgres Connection
+        run: |
+          PGPASSWORD=devpassword psql -h localhost -U devuser -d devboard_db -c "SELECT 1;"
+
+      # Step 4: Run Initial Schema & Seed Data Scripts
+      
+      - name: Load Init Scripts from ./init/postgres
+        run: |
+          echo "Running SQL initialization files..."
+          for f in ./init/postgres/*.sql; do
+            echo "Executing $f..."
+            PGPASSWORD=devpassword psql -h localhost -U devuser -d devboard_db -f "$f"
+          done

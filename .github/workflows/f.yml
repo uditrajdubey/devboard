@@ -1,1 +1,165 @@
+# GOAL: first i have to build the code of frontend and backemd and database
 
+name: build frontend and backend and database
+
+on:
+  push:
+
+jobs:
+
+  frontend:
+    runs-on: ubuntu-latest
+
+     # because all files of backend are kept in the frontend directory
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+
+    # pull down or i have cloned the repo code to the runner(it is simialr as git clone )
+      - name: code checkout
+        uses: actions/checkout@v7
+    
+     # node js is setup or installed because the frontend uses vite , react, tailwind so to run these techstack it requires nodejs to run 
+      - name:  Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+     
+     # we need to install all the packages which is required to build the frontend
+      - name: install dependencies
+        run : npm ci
+
+      # code linter is used to check if code is synatctically correct
+      - name: Run linter
+        run: npm run lint  
+
+      # Step 5: Unit & Component Tests Run Karna
+      # KYO KIYA: Code me koi breaking changes toh nahi aaye, ye ensure karne ke liye production build se pehle tests run karte hain.
+      # KAHA SE IDEA AAYA: package.json mein setup `"test": "vitest run --reporter=verbose"` aur testing libraries (Vitest, Testing Library) dekh kar.
+      - name: Run tests
+        run: npm run test
+     
+     # Step 6: Production Build Generate Karna
+      # KYO KIYA: Source code (React JSX, CSS) ko browser-readable optimized JavaScript, HTML aur CSS static files (`dist` folder) mein compile karne ke liye.
+      # KAHA SE IDEA AAYA: package.json ki `"build": "vite build"` script se. Production deployment ke liye ye step mandatory hai.
+      - name: Build application
+      - name: Build application
+        run: npm run build
+
+      
+
+
+  backend:
+    runs-on: ubuntu-latest
+
+    # because all files of backend are kept in the backend directory
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+
+      # Step 1: Code Checkout
+      # KYO KIYA: GitHub Actions ke runner environment mein pehle repository ka code clone karna hota hai taaki backend files access ho sakein.
+      # KAHA SE IDEA AAYA: Standard CI/CD practice hai ki bina code checkout kiye koi bhi compiler/toolchain kaam nahi kar sakta.
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      # Step 2: Go Environment Setup
+      # KYO KIYA: Go compiler aur toolchain ko runner machine par install/setup karne ke liye.
+      # KAHA SE IDEA AAYA: go.mod file ki pehli lines mein `go 1.22` mention hai, isliye Go 1.22 version set kiya hai.
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true # go.mod aur go.sum dependencies ko cache karega taaki build speed fast ho sake
+
+      # Step 3: Dependencies Download Karna
+      # KYO KIYA: Project ke required modules (jaise Gin framework `github.com/gin-gonic/gin` aur PostgreSQL driver `github.com/lib/pq`) ko download karna.
+      # KAHA SE IDEA AAYA: go.mod file ke `require (...)` block se pata chalta hai ki app external packages par dependent hai.
+      - name: Download Go dependencies
+        run: go mod download
+
+      # Step 4: Code Verification & Tidy Check
+      # KYO KIYA: Ensure karne ke liye ki go.mod aur go.sum files clean hain aur koi unused/missing dependency nahi hai.
+      # KAHA SE IDEA AAYA: Go ecosystem mein production code ki stability check karne ke liye `go mod verify` standard step hai.
+      - name: Verify dependencies
+        run: go mod verify
+
+      # Step 5: Backend Code Linting
+      # KYO KIYA: Go code ki formatting, unused variables, potential bugs, aur coding standards ko check karne ke liye.
+      # KAHA SE IDEA AAYA: Go community mein 'golangci-lint' sabse powerful aur industry-standard linter tool hai.
+      - name: Run golangci-lint
+        uses: golangci-lint/golangci-lint-action@v6
+
+      # Step 6: Unit Tests Run Karna
+      # KYO KIYA: Backend APIs aur database logic mein koi breaking changes ya bugs toh nahi hain, ye build hone se pehle check karne ke liye.
+      # KAHA SE IDEA AAYA: Sabhi Go applications ke liye test-driven CI pipeline banana standard practice hai (`go test ./...`).
+      - name: Run unit tests
+        run: go test -v ./...
+
+      # Step 6: Go Application Build Karna
+      # KYO KIYA: Go source code (`.go` files) ko ek single executable binary file mein compile/build karne ke liye.
+      # KAHA SE IDEA AAYA: Deployment par pure code ke bajaay sirf compiled binary run hoti hai. Is step se compiler check bhi ho jata hai ki build bina kisi syntax/type error ke pass ho rahi hai.
+      - name: Build Go binary
+        run: go build -v -o server .
+
+
+
+  database:
+    runs-on: ubuntu-latest
+
+    # Step A: PostgreSQL Service Setup (Aapke docker-compose.yml ke mutabiq)
+    # KYO KIYA: Docker compose ki tarah hi GitHub Actions runner par real Postgres 16-alpine container run karne ke liye.
+    # KAHA SE IDEA AAYA: Aapke docker-compose me 'postgres:16-alpine' image aur env variables `${POSTGRES_USER}`, `${POSTGRES_DB}` etc. set hain.
+    services:
+      postgres:
+        image: postgres:16-alpine # Docker compose waali exact image
+        env:
+          POSTGRES_USER: devuser      # Docker compose environment variable
+          POSTGRES_PASSWORD: devpassword  # Docker compose environment variable
+          POSTGRES_DB: devboard_db    # Docker compose environment variable
+        ports:
+          - 5432:5432 # Docker compose ke internal 5432 port mapping ke mutabiq
+        
+        # KYO KIYA: Database completely ready hai ya nahi, ye verify karne ke liye.
+        # KAHA SE IDEA AAYA: Docker compose ke healthcheck block (`pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}`) se.
+        options: >-
+          --health-cmd "pg_isready -U devuser -d devboard_db"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      # Step 1: Code Checkout
+      # KYO KIYA: Aapke docker-compose me `./init/postgres` folder mount tha jisme SQL initialization scripts hain. Un scripts ko access karne ke liye code clone kiya hai.
+      # KAHA SE IDEA AAYA: Docker compose volume mapping `- ./init/postgres:/docker-entrypoint-initdb.d:ro` dekhte hue.
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      # Step 2: Install PostgreSQL Client
+      # KYO KIYA: Runner VM par 'psql' tool install karne ke liye taaki db par queries run ho sakein.
+      # KAHA SE IDEA AAYA: Postgres service accessibility verify karne ke liye 'psql' standard tool hai.
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      # Step 3: Database Health & Connection Test
+      # KYO KIYA: Confirm karne ke liye ki `devuser` user aur `devboard_db` database credentials se connection ban raha hai.
+      # KAHA SE IDEA AAYA: Docker compose me set parameters (${POSTGRES_USER}, ${POSTGRES_DB}) ko double check karne ke liye.
+      - name: Test Postgres Connection
+        run: |
+          PGPASSWORD=devpassword psql -h localhost -U devuser -d devboard_db -c "SELECT 1;"
+
+      # Step 4: Run Initial Schema & Seed Data Scripts
+      # KYO KIYA: Docker entrypoint waali scripts (`./init/postgres`) ko execute karke default tables aur example projects/tasks verify karne ke liye.
+      # KAHA SE IDEA AAYA: Docker compose volume `- ./init/postgres:/docker-entrypoint-initdb.d:ro` se.
+      - name: Load Init Scripts from ./init/postgres
+        run: |
+          echo "Running SQL initialization files..."
+          for f in ./init/postgres/*.sql; do
+            echo "Executing $f..."
+            PGPASSWORD=devpassword psql -h localhost -U devuser -d devboard_db -f "$f"
+          done

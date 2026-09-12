@@ -13,7 +13,7 @@ jobs:
      # because all files of backend are kept in the frontend directory
     defaults:
       run:
-        working-directory: ./frontend
+       # working-directory: ./frontend
     steps:
 
     # pull down or i have cloned the repo code to the runner(it is simialr as git clone )
@@ -56,7 +56,7 @@ jobs:
     # because all files of backend are kept in the backend directory
     defaults:
       run:
-        working-directory: ./backend
+       # working-directory: ./backend
     steps:
 
       # Step 1: Code Checkout

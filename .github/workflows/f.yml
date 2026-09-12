@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
 
      # because all files of backend are kept in the frontend directory
-    defaults:
-      run:
+   # defaults:
+      #run:
        # working-directory: ./frontend
     steps:
 
@@ -54,8 +54,8 @@ jobs:
     runs-on: ubuntu-latest
 
     # because all files of backend are kept in the backend directory
-    defaults:
-      run:
+    #defaults:
+    #  run:
        # working-directory: ./backend
     steps:
 

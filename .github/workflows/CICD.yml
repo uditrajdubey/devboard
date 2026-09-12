@@ -7,23 +7,18 @@ on:
 
 jobs:
   code-lint-frontend-Backend-Postgress_DB:
-    runs-on: ubuntu-latest
-    steps:
-      uses: ./.github/workflows/code_lint_build_F_B_DB.yml
+    uses: ./.github/workflows/code_lint_build_F_B_DB.yml
 
   BUild-an-image-of-docker-and-push-image-to-dockerhub:
     needs: code-lint-frontend-Backend-Postgress_DB
-    runs-on: ubuntu-latest
-    steps:
-      secrets: inherit
-      uses: ./.github/workflows/frontend_backend_docker_build_and_push.yml
+    secrets: inherit
+    uses: ./.github/workflows/frontend_backend_docker_build_and_push.yml
 
   Deploy:
-     needs: [code-lint-frontend-Backend-Postgress_DB , BUild-an-image-of-docker-and-push-image-to-dockerhub ]
-     runs-on: ubuntu-latest
-     steps:
-      secrets: inherit
-      uses: ./.github/workflows/deploy.yml
+
+    needs: [code-lint-frontend-Backend-Postgress_DB , BUild-an-image-of-docker-and-push-image-to-dockerhub ]
+    secrets: inherit
+    uses: ./.github/workflows/deploy.yml
 
     
     
